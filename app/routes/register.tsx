@@ -7,7 +7,7 @@ import {
   validateName,
   validateEmail,
   validatePassword,
-} from '~/utils/user/userValidation';
+} from '~/utils/user/user.validation';
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -15,7 +15,8 @@ export const meta: V2_MetaFunction = () => {
       title: 'Register',
     },
     {
-      description: 'Register for an account',
+      name: 'description',
+      content: 'Register for an account',
     },
   ];
 };
@@ -101,6 +102,7 @@ export default function Register() {
                 <input
                   className='rounded-lg border-2 border-purple-500 p-4 disabled:bg-opacity-50'
                   type='email'
+                  id='email'
                   name='email'
                   defaultValue={actionData?.fields?.email}
                   aria-invalid={Boolean(actionData?.fieldErrors?.email)}
@@ -119,6 +121,7 @@ export default function Register() {
                 <input
                   className='rounded-lg border-2 border-purple-500 p-4 disabled:bg-opacity-50'
                   type='password'
+                  id='password'
                   name='password'
                   defaultValue={actionData?.fields?.password}
                   aria-invalid={Boolean(actionData?.fieldErrors?.password)}

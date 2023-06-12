@@ -36,3 +36,23 @@ export async function getUser(id: string | undefined) {
 
   return user;
 }
+
+export async function validateLogin(email: string, password: string) {
+  const user = await db.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  const passwordMatch = await bcrypt.compare(password, user.password);
+
+  if (!passwordMatch) {
+    return null;
+  }
+
+  return user.id;
+}
