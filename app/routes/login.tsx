@@ -42,7 +42,7 @@ export const action = async ({ request }: ActionArgs) => {
     return badRequest({
       fieldErrors,
       fields,
-      formError: 'The form did not validate correctly',
+      formError: null,
     });
   }
 

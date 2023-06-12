@@ -1,7 +1,6 @@
 import type { V2_MetaFunction } from '@remix-run/node';
 import { Link, Outlet, useLoaderData, useLocation } from '@remix-run/react';
 import { getPosts } from '~/utils/post/post.server';
-
 export const meta: V2_MetaFunction = () => {
   return [
     { title: 'Todos' },
@@ -22,7 +21,7 @@ export default function Todos() {
       <section className='container mx-auto flex flex-col gap-8 px-4 text-center md:flex-row md:gap-0'>
         <div className='container flex flex-col gap-6 self-center px-4 md:flex-1'>
           <div>
-            <h2 className='text-4xl font-bold'>Todos</h2>
+            <h2 className='text-4xl font-bold'>Posts</h2>
             <ul className='mt-4 flex flex-col items-center gap-4 '>
               {posts.map((post) => (
                 <li

@@ -46,3 +46,23 @@ export async function getPostById(id: string | undefined) {
   }
   return post;
 }
+
+export async function updatePost(
+  id: string | undefined,
+  title: string,
+  description: string
+) {
+  const post = await db.post.update({
+    where: {
+      id,
+    },
+    data: {
+      title,
+      description,
+    },
+  });
+  if (!post) {
+    throw json({ message: 'Post not updated' }, { status: 500 });
+  }
+  return post;
+}

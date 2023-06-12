@@ -47,7 +47,7 @@ export const action = async ({ request }: ActionArgs) => {
   }
   const post = await createPost(title, description, userId);
 
-  return redirect(`/todos/${post.id}`);
+  return redirect(`/posts/${post.id}`);
 };
 export default function TodoForm() {
   const actionData = useActionData<typeof action>();

@@ -1,4 +1,4 @@
-import type { LinksFunction, V2_MetaFunction } from '@remix-run/node';
+import type { LinksFunction } from '@remix-run/node';
 import {
   Links,
   LiveReload,
@@ -6,6 +6,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  Link,
 } from '@remix-run/react';
 import styles from './globals.css';
 
@@ -21,6 +22,10 @@ export default function App() {
         <Links />
       </head>
       <body suppressHydrationWarning={true}>
+        <nav className='flex justify-center gap-8 p-4'>
+          <Link to='/'>Home</Link>
+          <Link to='/posts'>About</Link>
+        </nav>
         <Outlet />
         <ScrollRestoration />
         <Scripts />

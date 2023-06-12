@@ -29,9 +29,9 @@ export default function Index() {
   const { loggedIn } = useLoaderData<typeof loader>();
   return (
     <main className='flex h-screen flex-col items-center justify-center gap-4 bg-purple-200 font-mono'>
-      <h1 className='text-4xl font-bold'>Welcome to Our Todo App!</h1>
+      <h1 className='text-4xl font-bold'>Welcome to Our Post App!</h1>
       <Link to='posts' className='text-2xl hover:underline'>
-        Make Todos
+        Make Posts
       </Link>
       {loggedIn ? (
         <Form method='POST'>
