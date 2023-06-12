@@ -3,7 +3,6 @@ import {
   LoaderArgs,
   ActionArgs,
   json,
-  redirect,
 } from '@remix-run/node';
 import { Form, Link, useLoaderData } from '@remix-run/react';
 import { getUserSession, destroyUserSession } from '~/utils/sessions.server';
@@ -31,7 +30,7 @@ export default function Index() {
   return (
     <main className='flex h-screen flex-col items-center justify-center gap-4 bg-purple-200 font-mono'>
       <h1 className='text-4xl font-bold'>Welcome to Our Todo App!</h1>
-      <Link to='todos' className='text-2xl hover:underline'>
+      <Link to='posts' className='text-2xl hover:underline'>
         Make Todos
       </Link>
       {loggedIn ? (

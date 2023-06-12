@@ -1,12 +1,6 @@
 import type { V2_MetaFunction } from '@remix-run/node';
-import {
-  Link,
-  Outlet,
-  useLoaderData,
-  useLocation,
-  useNavigation,
-} from '@remix-run/react';
-import { db } from '~/utils/db.server';
+import { Link, Outlet, useLoaderData, useLocation } from '@remix-run/react';
+import { getPosts } from '~/utils/post/post.server';
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -16,30 +10,27 @@ export const meta: V2_MetaFunction = () => {
 };
 
 export const loader = async () => {
-  const todos = db.todo.findMany({
-    take: 5,
-  });
-  if (!todos) return [];
-  return todos;
+  const posts = await getPosts();
+  return posts;
 };
 
 export default function Todos() {
   const { pathname } = useLocation();
-  const todos = useLoaderData<typeof loader>();
+  const posts = useLoaderData<typeof loader>();
   return (
-    <main className='flex h-screen items-center justify-center gap-4 bg-purple-200 font-mono'>
+    <main className='act flex h-screen items-center justify-center gap-4 bg-purple-200 font-mono'>
       <section className='container mx-auto flex flex-col gap-8 px-4 text-center md:flex-row md:gap-0'>
-        <div className='container flex flex-col gap-6 px-4 md:flex-1'>
+        <div className='container flex flex-col gap-6 self-center px-4 md:flex-1'>
           <div>
             <h2 className='text-4xl font-bold'>Todos</h2>
             <ul className='mt-4 flex flex-col items-center gap-4 '>
-              {todos.map((todo) => (
+              {posts.map((post) => (
                 <li
-                  key={todo.id}
+                  key={post.id}
                   className='flex w-1/3  items-center justify-center rounded bg-white p-4'
                 >
-                  <Link className='text-lg hover:underline' to={todo.id}>
-                    {todo.title}
+                  <Link className='text-lg hover:underline' to={post.id}>
+                    {post.title}
                   </Link>
                 </li>
               ))}

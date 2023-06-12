@@ -13,32 +13,30 @@ import {
 } from '@remix-run/node';
 import { db } from '~/utils/db.server';
 import { getUserSession } from '~/utils/sessions.server';
+import { useEffect, useState } from 'react';
+import { getPostById } from '~/utils/post/post.server';
+import { getUser } from '~/utils/user/user.server';
 
 export const meta: V2_MetaFunction<typeof loader> = ({ data }) => {
   return [
-    { title: data?.todo?.title },
-    { name: 'description', content: data?.todo?.description },
+    { title: data?.post?.title },
+    { name: 'description', content: data?.post?.description },
   ];
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
   const userId = await getUserSession(request);
-  const todo = await db.todo.findUnique({
-    where: {
-      id: params.id,
-    },
-  });
-  if (!todo) {
-    throw new Error('Todo Not Found');
-  }
-  const user = await db.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
+  const post = await getPostById(params.id);
+  const user = await getUser(userId);
+
+  const editAllowed = user?.id === userId;
+  const isLogged = !!userId;
+
   return json({
-    todo,
+    post,
     user,
+    editAllowed,
+    isLogged,
   });
 };
 
@@ -80,11 +78,19 @@ export const action: ActionFunction = async ({ params, request }) => {
 };
 
 export default function Todo() {
-  const { user, todo } = useLoaderData<typeof loader>();
+  const { user, post, editAllowed, isLogged } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const [title, setTitle] = useState(post.title);
+  const [description, setDescription] = useState(post.description);
+
   const errorMessage = actionData ? actionData.toString() : null;
   const { formMethod, state } = useNavigation();
   const isSubmitting = state === 'submitting' && formMethod === 'POST';
+  const notVisible = !isLogged || !editAllowed;
+  useEffect(() => {
+    setTitle(post.title);
+    setDescription(post.description);
+  }, [post]);
 
   return (
     <div className='container flex flex-col gap-6 px-4 md:flex-1'>
@@ -102,7 +108,9 @@ export default function Todo() {
               type='text'
               name='title'
               id='title'
-              defaultValue={todo.title}
+              onChange={(e) => setTitle(e.target.value)}
+              value={title}
+              readOnly={!editAllowed}
             />
           </div>
           <div className='flex flex-col gap-4'>
@@ -111,21 +119,25 @@ export default function Todo() {
               className='rounded-lg border border-gray-300 p-4'
               name='description'
               id='description'
-              cols={30}
-              rows={10}
-              defaultValue={todo.description}
+              onChange={(e) => setDescription(e.target.value)}
+              value={description}
+              readOnly={!editAllowed}
             ></textarea>
           </div>
         </fieldset>
-        <button className='mt-4 rounded-lg bg-white p-4 text-xl transition-all hover:bg-blue-600 hover:text-white'>
-          {isSubmitting ? 'Saving...' : 'Save Todo'}
-        </button>
+        {!notVisible && (
+          <button className='mt-4 rounded-lg bg-white p-4 text-xl transition-all hover:bg-blue-600 hover:text-white disabled:cursor-not-allowed disabled:bg-opacity-50'>
+            {isSubmitting ? 'Saving...' : 'Save Todo'}
+          </button>
+        )}
       </Form>
-      <Form method='DELETE'>
-        <button className=' rounded-lg bg-white p-4 text-xl transition-all hover:bg-red-600 hover:text-white'>
-          Delete Todo
-        </button>
-      </Form>
+      {!notVisible && (
+        <Form method='DELETE'>
+          <button className='rounded-lg bg-white p-4 text-xl transition-all hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:bg-opacity-50'>
+            Delete Todo
+          </button>
+        </Form>
+      )}
     </div>
   );
 }

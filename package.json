@@ -5,14 +5,17 @@
     "build": "remix build",
     "dev": "remix dev",
     "start": "remix-serve build",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "build:css": "tailwindcss -o ./app/tailwind.css"
   },
   "dependencies": {
     "@prisma/client": "^4.15.0",
+    "@radix-ui/react-slot": "^1.0.2",
     "@remix-run/css-bundle": "^1.17.0",
     "@remix-run/node": "^1.17.0",
     "@remix-run/react": "^1.17.0",
     "@remix-run/serve": "^1.17.0",
+    "bcrypt": "^5.1.0",
     "class-variance-authority": "^0.6.0",
     "clsx": "^1.2.1",
     "isbot": "^3.6.8",
@@ -25,6 +28,7 @@
   "devDependencies": {
     "@remix-run/dev": "^1.17.0",
     "@remix-run/eslint-config": "^1.17.0",
+    "@types/bcrypt": "^5.0.0",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
     "eslint": "^8.38.0",

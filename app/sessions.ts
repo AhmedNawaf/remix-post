@@ -23,7 +23,7 @@ const { getSession, commitSession, destroySession } =
       path: '/',
       sameSite: 'lax',
       secrets: ['s3cret1'],
-      secure: false,
+      secure: true,
     },
   });
 

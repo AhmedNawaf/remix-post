@@ -3,22 +3,33 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
+  id       String    @id @default(uuid())
+  email    String    @unique
   name     String
   password String
-  todos    Todo[]
+  posts    Post[]
+  comments Comment[]
 }
 
-model Todo {
-  id          String @id @default(uuid())
-  title       String @unique
+model Post {
+  id          String    @id @default(uuid())
+  title       String    @unique
   description String
-  user        User   @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
   userId      String
+  comments    Comment[]
+}
+
+model Comment {
+  id     String @id @default(uuid())
+  text   String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
 }
