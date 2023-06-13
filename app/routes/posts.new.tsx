@@ -5,14 +5,29 @@ import {
   isRouteErrorResponse,
   useRouteError,
 } from '@remix-run/react';
-import { ActionArgs, redirect, LoaderFunction, json } from '@remix-run/node';
+import {
+  ActionArgs,
+  redirect,
+  LoaderFunction,
+  V2_MetaFunction,
+} from '@remix-run/node';
 import { getUserSession } from '~/utils/sessions.server';
 import { badRequest } from '~/utils/request.server';
-import {
-  validateTitle,
-  validateDescription,
-} from '~/utils/post/postValidation';
 import { createPost } from '~/utils/post/post.server';
+import { parseForm } from 'zodix';
+import {
+  PostFormSchema,
+  TFormError,
+  FormErrorSchema,
+} from '~/utils/post/post.schema';
+import { ZodError } from 'zod';
+
+export const meta: V2_MetaFunction = () => {
+  return [
+    { title: 'Create Post' },
+    { name: 'description', content: 'This is The Create Post page' },
+  ];
+};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const userId = await getUserSession(request);
@@ -25,32 +40,28 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const action = async ({ request }: ActionArgs) => {
-  const userId = await getUserSession(request);
-  const formData = Object.fromEntries(await request.formData());
-  const { title, description } = formData;
-  if (typeof title !== 'string' || typeof description !== 'string') {
-    return badRequest({
-      fieldErrors: null,
-      fields: null,
-      formError: 'Form not submitted correctly',
-    });
+  try {
+    const userId = await getUserSession(request);
+    const { title, description } = await parseForm(request, PostFormSchema);
+    await createPost(title, description, userId);
+    return redirect('/posts');
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const fieldErrors = error.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      }));
+      const errorData = {
+        title: fieldErrors.find((error) => error.field === 'title')?.message,
+        description: fieldErrors.find((error) => error.field === 'description')
+          ?.message,
+      };
+      return badRequest<TFormError>(errorData);
+    }
   }
-
-  const fieldErrors = {
-    title: validateTitle(title),
-    description: validateDescription(description),
-  };
-  const fields = { title, description };
-
-  if (Object.values(fieldErrors).some(Boolean)) {
-    return badRequest({ fieldErrors, fields, formError: null });
-  }
-  const post = await createPost(title, description, userId);
-
-  return redirect(`/posts/${post.id}`);
 };
 export default function TodoForm() {
-  const actionData = useActionData<typeof action>();
+  const actionData = FormErrorSchema.parse(useActionData());
   const { state } = useNavigation();
   return (
     <Form method='POST' className='space-y-5 text-xl'>
@@ -63,13 +74,12 @@ export default function TodoForm() {
             type='text'
             name='title'
             id='title'
-            defaultValue={actionData?.fields?.title}
-            aria-invalid={Boolean(actionData?.fieldErrors?.title)}
-            aria-errormessage={actionData?.fieldErrors?.title && 'title-error'}
+            aria-invalid={Boolean(actionData?.title)}
+            aria-errormessage={actionData?.title ?? 'title-error'}
           />
-          {actionData?.fieldErrors?.title && (
+          {actionData?.title && (
             <p id='title-error' className='text-red-500' role='alert'>
-              {actionData?.fieldErrors?.title}
+              {actionData?.title}
             </p>
           )}
         </div>
@@ -80,23 +90,15 @@ export default function TodoForm() {
             name='description'
             id='description'
             rows={4}
-            defaultValue={actionData?.fields?.description}
-            aria-invalid={Boolean(actionData?.fieldErrors?.description)}
-            aria-errormessage={
-              actionData?.fieldErrors?.description && 'description-error'
-            }
+            aria-invalid={Boolean(actionData?.description)}
+            aria-errormessage={actionData?.description ?? 'description-error'}
           ></textarea>
-          {actionData?.fieldErrors?.description && (
+          {actionData?.description && (
             <p id='description-error' className='text-red-500' role='alert'>
-              {actionData?.fieldErrors?.description}
+              {actionData?.description}
             </p>
           )}
         </div>
-        {actionData?.formError && (
-          <p className='text-red-500' role='alert'>
-            {actionData?.formError}
-          </p>
-        )}
         <button className='mt-4 rounded-lg bg-white p-4 text-xl transition-all hover:bg-purple-300'>
           {state === 'submitting' ? 'Creating...' : 'Create'}
         </button>

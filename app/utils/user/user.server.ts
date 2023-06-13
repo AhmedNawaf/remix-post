@@ -37,12 +37,22 @@ export async function getUser(id: string | undefined) {
   return user;
 }
 
-export async function validateLogin(email: string, password: string) {
+async function getUserByEmail(email: string) {
   const user = await db.user.findUnique({
     where: {
       email,
     },
   });
+
+  if (!user) {
+    throw json({ message: 'User not found' }, { status: 404 });
+  }
+
+  return user;
+}
+
+export async function validateLogin(email: string, password: string) {
+  const user = await getUserByEmail(email);
 
   if (!user) {
     return null;

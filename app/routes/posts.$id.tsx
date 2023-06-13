@@ -16,32 +16,18 @@ import {
   redirect,
   ActionArgs,
 } from '@remix-run/node';
-import { db } from '~/utils/db.server';
 import { getUserSession } from '~/utils/sessions.server';
 import { useEffect, useState } from 'react';
-import { getPostById, updatePost } from '~/utils/post/post.server';
+import { deletePost, getPostById, updatePost } from '~/utils/post/post.server';
 import { getUser } from '~/utils/user/user.server';
 import { badRequest } from '~/utils/request.server';
 import {
-  validateTitle,
-  validateDescription,
-} from '~/utils/post/postValidation';
-
-interface ErrorFormat {
-  fieldErrors:
-    | {
-        title: string | undefined;
-        description: string | undefined;
-      }
-    | undefined;
-  fields:
-    | {
-        title: string;
-        description: string;
-      }
-    | undefined;
-  formError: string | null;
-}
+  FormErrorSchema,
+  type TFormError,
+  PostFormSchema,
+} from '~/utils/post/post.schema';
+import { parseForm } from 'zodix';
+import { ZodError } from 'zod';
 
 export const meta: V2_MetaFunction<typeof loader> = ({ data }) => {
   return [
@@ -51,16 +37,18 @@ export const meta: V2_MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
-  const userId = await getUserSession(request);
-  const post = await getPostById(params.id);
-  const user = await getUser(post.userId);
+  const [userId, post] = await Promise.all([
+    getUserSession(request),
+    getPostById(params.id),
+  ]);
+  const author = await getUser(post.userId);
 
-  const editAllowed = user?.id === userId;
-  const isLogged = !!userId;
+  const editAllowed = author.id === userId;
+  const isLogged = Boolean(userId);
 
   return json({
     post,
-    user,
+    user: author,
     editAllowed,
     isLogged,
   });
@@ -68,49 +56,41 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export const action = async ({ params, request }: ActionArgs) => {
   if (request.method === 'DELETE') {
-    await db.post.delete({
-      where: {
-        id: params.id,
-      },
-    });
+    await deletePost(params.id);
     return redirect('/posts');
   }
   if (request.method === 'POST') {
-    const formData = Object.fromEntries(await request.formData());
-    const { title, description } = formData;
-    if (typeof title !== 'string' || typeof description !== 'string') {
-      return badRequest({
-        formError: 'Invalid form data',
-      });
+    try {
+      const { title, description } = await parseForm(request, PostFormSchema);
+      await updatePost(params.id, title, description);
+      return redirect('.');
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const fieldErrors = error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        }));
+        const errorData = {
+          title: fieldErrors.find((error) => error.field === 'title')?.message,
+          description: fieldErrors.find(
+            (error) => error.field === 'description'
+          )?.message,
+        };
+        return badRequest<TFormError>(errorData);
+      }
     }
-
-    const fieldErrors = {
-      title: validateTitle(title),
-      description: validateDescription(description),
-    };
-
-    if (Object.values(fieldErrors).some(Boolean)) {
-      return badRequest({
-        fieldErrors,
-        formError: null,
-      });
-    }
-
-    await updatePost(params.id, title, description);
-    return redirect(`/posts/${params.id}`);
   }
 };
 
 export default function Todo() {
   const { user, post, editAllowed, isLogged } = useLoaderData<typeof loader>();
-  const actionData = useActionData<ErrorFormat>();
+  const actionData = FormErrorSchema.parse(useActionData());
   const [title, setTitle] = useState(post.title);
   const [description, setDescription] = useState(post.description);
   const { formMethod, state } = useNavigation();
   const isSubmitting = state === 'submitting' && formMethod === 'POST';
   const notVisible = !isLogged || !editAllowed;
   const { pathname } = useLocation();
-  console.log(pathname.includes('comments'));
 
   useEffect(() => {
     setTitle(post.title);
@@ -122,7 +102,7 @@ export default function Todo() {
       <div>
         <h2 className='text-4xl font-bold'>Post</h2>
       </div>
-      <h2 className='text-4xl'>User: {user?.name}</h2>
+      <h2 className='text-4xl'>User: {user.name}</h2>
       <Form method='POST'>
         <fieldset disabled={isSubmitting}>
           <div className='flex flex-col gap-4'>
@@ -135,14 +115,11 @@ export default function Todo() {
               onChange={(e) => setTitle(e.target.value)}
               value={title}
               readOnly={!editAllowed}
-              aria-invalid={Boolean(actionData?.fieldErrors?.title)}
-              aria-errormessage={
-                actionData?.fieldErrors?.title && 'title-error'
-              }
+              aria-invalid={Boolean(actionData?.title)}
             />
-            {actionData?.fieldErrors?.title && (
+            {actionData?.title && (
               <div id='title-error' className='text-red-600' role='alert'>
-                {actionData.fieldErrors.title}
+                {actionData.title}
               </div>
             )}
           </div>
@@ -155,14 +132,11 @@ export default function Todo() {
               onChange={(e) => setDescription(e.target.value)}
               value={description}
               readOnly={!editAllowed}
-              aria-invalid={Boolean(actionData?.fieldErrors?.description)}
-              aria-errormessage={
-                actionData?.fieldErrors?.description && 'description-error'
-              }
+              aria-invalid={Boolean(actionData?.description)}
             ></textarea>
-            {actionData?.fieldErrors?.description && (
+            {actionData?.description && (
               <div id='description-error' className='text-red-600' role='alert'>
-                {actionData.fieldErrors.description}
+                {actionData.description}
               </div>
             )}
           </div>

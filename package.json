@@ -23,7 +23,9 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^1.13.1",
-    "tailwindcss-animate": "^1.0.6"
+    "tailwindcss-animate": "^1.0.6",
+    "zod": "^3.21.4",
+    "zodix": "^0.4.1"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.17.0",

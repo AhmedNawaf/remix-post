@@ -3,8 +3,8 @@ import { Link, Outlet, useLoaderData, useLocation } from '@remix-run/react';
 import { getPosts } from '~/utils/post/post.server';
 export const meta: V2_MetaFunction = () => {
   return [
-    { title: 'Todos' },
-    { name: 'description', content: 'This is a The Todos page' },
+    { title: 'Posts' },
+    { name: 'description', content: 'This is The Posts page' },
   ];
 };
 

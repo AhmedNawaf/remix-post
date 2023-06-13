@@ -4,6 +4,13 @@ import { createUserSession } from '~/utils/sessions.server';
 import { validateLogin } from '~/utils/user/user.server';
 import { badRequest } from '~/utils/request.server';
 import { validateEmail, validatePassword } from '~/utils/user/user.validation';
+import { parseForm } from 'zodix';
+import { ZodError } from 'zod';
+import {
+  LoginSchema,
+  FromErrorsSchema,
+  type TRegisterFromErrors,
+} from '~/utils/user/user.schema';
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -18,48 +25,33 @@ export const meta: V2_MetaFunction = () => {
 };
 
 export const action = async ({ request }: ActionArgs) => {
-  const formData = Object.fromEntries(await request.formData());
-  const { email, password } = formData;
-  if (typeof email !== 'string' || typeof password !== 'string') {
-    return badRequest({
-      fieldErrors: null,
-      fields: null,
-      formError: "The form didn't submit correctly",
-    });
+  try {
+    const { email, password } = await parseForm(request, LoginSchema);
+    const userId = await validateLogin(email, password);
+    if (!userId) {
+      return badRequest({
+        formError: 'Invalid email or password',
+      });
+    }
+    return createUserSession(userId, '/');
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const fieldErrors = error.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      }));
+      const errorData = {
+        email: fieldErrors.find((error) => error.field === 'email')?.message,
+        password: fieldErrors.find((error) => error.field === 'password')
+          ?.message,
+      };
+      return badRequest<TRegisterFromErrors>(errorData);
+    }
   }
-
-  const fieldErrors = {
-    email: validateEmail(email),
-    password: validatePassword(password),
-  };
-
-  const fields = {
-    email,
-    password,
-  };
-
-  if (Object.values(fieldErrors).some(Boolean)) {
-    return badRequest({
-      fieldErrors,
-      fields,
-      formError: null,
-    });
-  }
-
-  const userId = await validateLogin(email, password);
-  if (!userId) {
-    return badRequest({
-      fieldErrors: null,
-      fields: null,
-      formError: 'Invalid email or password',
-    });
-  }
-
-  return createUserSession(userId, '/');
 };
 
 export default function Login() {
-  const actionData = useActionData<typeof action>();
+  const actionData = FromErrorsSchema.parse(useActionData());
   const { state } = useNavigation();
   const isSubmitting = state === 'submitting';
   return (
@@ -77,17 +69,18 @@ export default function Login() {
                   Email<sup className='text-red-500'>*</sup>
                 </label>
                 <input
+                  required
                   className='rounded-lg border-2 border-purple-500 p-4 disabled:bg-opacity-50'
                   type='email'
                   id='email'
                   name='email'
-                  defaultValue={actionData?.fields?.email}
-                  aria-invalid={Boolean(actionData?.fieldErrors?.email)}
-                  aria-errormessage={actionData?.fieldErrors?.email}
+                  aria-invalid={Boolean(actionData?.email)}
+                  aria-errormessage={actionData?.email || ''}
+                  autoComplete='email'
                 />
-                {actionData?.fieldErrors?.email && (
-                  <p className='text-center text-red-500'>
-                    {actionData.fieldErrors.email}
+                {actionData?.email && (
+                  <p className='mt-3 text-center text-red-500'>
+                    {actionData.email}
                   </p>
                 )}
               </div>
@@ -96,17 +89,18 @@ export default function Login() {
                   Password<sup className='text-red-500'>*</sup>
                 </label>
                 <input
+                  required
                   className='rounded-lg border-2 border-purple-500 p-4 disabled:bg-opacity-50'
                   type='password'
                   id='password'
                   name='password'
-                  defaultValue={actionData?.fields?.password}
-                  aria-invalid={Boolean(actionData?.fieldErrors?.password)}
-                  aria-errormessage={actionData?.fieldErrors?.password}
+                  defaultValue={actionData?.password || ''}
+                  aria-invalid={Boolean(actionData?.password)}
+                  aria-errormessage={actionData?.password || ''}
                 />
-                {actionData?.fieldErrors?.password && (
-                  <p className='text-center text-red-500'>
-                    {actionData.fieldErrors.password}
+                {actionData?.password && (
+                  <p className='mt-3 text-center text-red-500'>
+                    {actionData.password}
                   </p>
                 )}
               </div>

@@ -3,11 +3,13 @@ import { V2_MetaFunction, ActionArgs } from '@remix-run/node';
 import { createUserSession } from '~/utils/sessions.server';
 import { createUser } from '~/utils/user/user.server';
 import { badRequest } from '~/utils/request.server';
+import { parseForm } from 'zodix';
 import {
-  validateName,
-  validateEmail,
-  validatePassword,
-} from '~/utils/user/user.validation';
+  RegisterSchema,
+  FromErrorsSchema,
+  type TRegisterFromErrors,
+} from '~/utils/user/user.schema';
+import { ZodError } from 'zod';
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -22,48 +24,33 @@ export const meta: V2_MetaFunction = () => {
 };
 
 export const action = async ({ request }: ActionArgs) => {
-  const formData = Object.fromEntries(await request.formData());
-  const { name, email, password } = formData;
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  if (
-    typeof name !== 'string' ||
-    typeof email !== 'string' ||
-    typeof password !== 'string'
-  ) {
-    return badRequest({
-      fieldErrors: null,
-      fields: null,
-      formError: "The form didn't submit correctly",
-    });
+  try {
+    const { username, email, password } = await parseForm(
+      request,
+      RegisterSchema
+    );
+    const user = await createUser(username, email, password);
+    return createUserSession(user.id, '/');
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const fieldErrors = error.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      }));
+      const errorData = {
+        username: fieldErrors.find((error) => error.field === 'username')
+          ?.message,
+        email: fieldErrors.find((error) => error.field === 'email')?.message,
+        password: fieldErrors.find((error) => error.field === 'password')
+          ?.message,
+      };
+      return badRequest<TRegisterFromErrors>(errorData);
+    }
   }
-
-  const fieldErrors = {
-    name: validateName(name),
-    email: validateEmail(email),
-    password: validatePassword(password),
-  };
-
-  const fields = {
-    name,
-    email,
-    password,
-  };
-
-  if (Object.values(fieldErrors).some(Boolean)) {
-    return badRequest({
-      fieldErrors,
-      fields,
-      formError: 'The form did not validate correctly',
-    });
-  }
-
-  const user = await createUser(name, email, password);
-
-  return createUserSession(user.id, '/');
 };
 
 export default function Register() {
-  const actionData = useActionData<typeof action>();
+  const actionData = FromErrorsSchema.parse(useActionData());
   const { state } = useNavigation();
   const isSubmitting = state === 'submitting';
   return (
@@ -77,21 +64,21 @@ export default function Register() {
               disabled={isSubmitting}
             >
               <div className='flex w-full flex-col '>
-                <label htmlFor='name'>
+                <label htmlFor='username'>
                   Username<sup className='text-red-500'>*</sup>
                 </label>
                 <input
+                  required
                   className='rounded-lg border-2 border-purple-500 p-4 disabled:bg-opacity-50'
                   type='text'
-                  id='name'
-                  name='name'
-                  defaultValue={actionData?.fields?.name}
-                  aria-invalid={Boolean(actionData?.fieldErrors?.name)}
-                  aria-errormessage={actionData?.fieldErrors?.name}
+                  id='username'
+                  name='username'
+                  aria-invalid={Boolean(actionData?.username)}
+                  aria-errormessage={actionData?.username || ''}
                 />
-                {actionData?.fieldErrors?.name && (
+                {actionData?.username && (
                   <p className='text-center text-red-500'>
-                    {actionData.fieldErrors.name}
+                    {actionData.username}
                   </p>
                 )}
               </div>
@@ -100,18 +87,16 @@ export default function Register() {
                   Email<sup className='text-red-500'>*</sup>
                 </label>
                 <input
+                  required
                   className='rounded-lg border-2 border-purple-500 p-4 disabled:bg-opacity-50'
                   type='email'
                   id='email'
                   name='email'
-                  defaultValue={actionData?.fields?.email}
-                  aria-invalid={Boolean(actionData?.fieldErrors?.email)}
-                  aria-errormessage={actionData?.fieldErrors?.email}
+                  aria-invalid={Boolean(actionData?.email)}
+                  aria-errormessage={actionData?.email || ''}
                 />
-                {actionData?.fieldErrors?.email && (
-                  <p className='text-center text-red-500'>
-                    {actionData.fieldErrors.email}
-                  </p>
+                {actionData?.email && (
+                  <p className='text-center text-red-500'>{actionData.email}</p>
                 )}
               </div>
               <div className='flex w-full flex-col '>
@@ -119,23 +104,20 @@ export default function Register() {
                   Password<sup className='text-red-500'>*</sup>
                 </label>
                 <input
+                  required
                   className='rounded-lg border-2 border-purple-500 p-4 disabled:bg-opacity-50'
                   type='password'
                   id='password'
                   name='password'
-                  defaultValue={actionData?.fields?.password}
-                  aria-invalid={Boolean(actionData?.fieldErrors?.password)}
-                  aria-errormessage={actionData?.fieldErrors?.password}
+                  aria-invalid={Boolean(actionData?.password)}
+                  aria-errormessage={actionData?.password || ''}
                 />
-                {actionData?.fieldErrors?.password && (
+                {actionData?.password && (
                   <p className='text-center text-red-500'>
-                    {actionData.fieldErrors.password}
+                    {actionData.password}
                   </p>
                 )}
               </div>
-              {actionData?.formError && (
-                <p className='text-red-500'>{actionData.formError}</p>
-              )}
               <button
                 className='w-full max-w-2xl rounded-lg border-2 border-purple-500 bg-purple-500 p-4 font-bold text-white disabled:bg-opacity-50 '
                 type='submit'
