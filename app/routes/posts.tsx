@@ -36,14 +36,12 @@ export default function Todos() {
             </ul>
           </div>
           {!pathname.includes('new') && (
-            <div>
-              <Link
-                to='new'
-                className='rounded-lg bg-white p-4 text-xl transition-all hover:underline'
-              >
-                Add Todo
-              </Link>
-            </div>
+            <Link
+              to='new'
+              className='mt-4 self-center rounded-lg bg-white p-4 text-xl transition-all hover:underline'
+            >
+              Add Post
+            </Link>
           )}
         </div>
         <div className='container px-4 md:flex-1'>

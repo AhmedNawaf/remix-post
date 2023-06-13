@@ -5,6 +5,9 @@ import {
   useNavigation,
   isRouteErrorResponse,
   useRouteError,
+  Outlet,
+  Link,
+  useLocation,
 } from '@remix-run/react';
 import {
   LoaderArgs,
@@ -106,6 +109,8 @@ export default function Todo() {
   const { formMethod, state } = useNavigation();
   const isSubmitting = state === 'submitting' && formMethod === 'POST';
   const notVisible = !isLogged || !editAllowed;
+  const { pathname } = useLocation();
+  console.log(pathname.includes('comments'));
 
   useEffect(() => {
     setTitle(post.title);
@@ -113,7 +118,7 @@ export default function Todo() {
   }, [post]);
 
   return (
-    <div className='container flex flex-col gap-6 px-4 md:flex-1'>
+    <div className='container flex flex-col gap-4 px-4 md:flex-1'>
       <div>
         <h2 className='text-4xl font-bold'>Post</h2>
       </div>
@@ -177,6 +182,13 @@ export default function Todo() {
           </button>
         </Form>
       )}
+      <Link
+        to={pathname.includes('comments') ? './' : 'comments'}
+        className='mt-4 self-start text-xl'
+      >
+        {pathname.includes('comments') ? 'Hide' : 'Show'} comments
+      </Link>
+      <Outlet />
     </div>
   );
 }

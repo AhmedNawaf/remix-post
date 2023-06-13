@@ -22,10 +22,6 @@ export default function App() {
         <Links />
       </head>
       <body suppressHydrationWarning={true}>
-        <nav className='flex justify-center gap-8 p-4'>
-          <Link to='/'>Home</Link>
-          <Link to='/posts'>About</Link>
-        </nav>
         <Outlet />
         <ScrollRestoration />
         <Scripts />
