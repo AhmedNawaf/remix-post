@@ -37,18 +37,14 @@ export const meta: V2_MetaFunction<typeof loader> = ({ data }) => {
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
-  const [userId, post] = await Promise.all([
-    getUserSession(request),
-    getPostById(params.id),
-  ]);
-  const author = await getUser(post.userId);
+  const userId = await getUserSession(request);
+  const post = await getPostById(params.id);
 
-  const editAllowed = author.id === userId;
+  const editAllowed = post.user.id === userId;
   const isLogged = Boolean(userId);
 
   return json({
     post,
-    user: author,
     editAllowed,
     isLogged,
   });
@@ -83,7 +79,7 @@ export const action = async ({ params, request }: ActionArgs) => {
 };
 
 export default function Todo() {
-  const { user, post, editAllowed, isLogged } = useLoaderData<typeof loader>();
+  const { post, editAllowed, isLogged } = useLoaderData<typeof loader>();
   const actionData = FormErrorSchema.parse(useActionData());
   const [title, setTitle] = useState(post.title);
   const [description, setDescription] = useState(post.description);
@@ -102,7 +98,7 @@ export default function Todo() {
       <div>
         <h2 className='text-4xl font-bold'>Post</h2>
       </div>
-      <h2 className='text-4xl'>User: {user.name}</h2>
+      <h2 className='text-4xl'>User: {post.user.name}</h2>
       <Form method='POST'>
         <fieldset disabled={isSubmitting}>
           <div className='flex flex-col gap-4'>

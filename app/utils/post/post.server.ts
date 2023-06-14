@@ -42,6 +42,14 @@ export async function getPostById(id: string | undefined) {
     where: {
       id,
     },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
   });
   if (!post) {
     throw json({ message: 'Post not found' }, { status: 404 });
