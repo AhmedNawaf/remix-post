@@ -3,7 +3,6 @@ import { V2_MetaFunction, ActionArgs } from '@remix-run/node';
 import { createUserSession } from '~/utils/sessions.server';
 import { validateLogin } from '~/utils/user/user.server';
 import { badRequest } from '~/utils/request.server';
-import { validateEmail, validatePassword } from '~/utils/user/user.validation';
 import { parseForm } from 'zodix';
 import { ZodError } from 'zod';
 import {
@@ -27,13 +26,20 @@ export const meta: V2_MetaFunction = () => {
 export const action = async ({ request }: ActionArgs) => {
   try {
     const { email, password } = await parseForm(request, LoginSchema);
+
     const userId = await validateLogin(email, password);
+    console.log('Here we go 3');
+
     if (!userId) {
       return badRequest({
         formError: 'Invalid email or password',
       });
     }
-    return createUserSession(userId, '/');
+    console.log('Here we go 4');
+    const session = await createUserSession(userId, '/');
+    console.log('Here we go');
+
+    return session;
   } catch (error) {
     if (error instanceof ZodError) {
       const fieldErrors = error.issues.map((issue) => ({

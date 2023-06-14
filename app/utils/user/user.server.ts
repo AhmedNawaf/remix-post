@@ -45,7 +45,7 @@ async function getUserByEmail(email: string) {
   });
 
   if (!user) {
-    throw json({ message: 'User not found' }, { status: 404 });
+    return null;
   }
 
   return user;
