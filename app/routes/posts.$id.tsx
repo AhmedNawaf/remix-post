@@ -155,6 +155,7 @@ export default function Todo() {
       <Link
         to={pathname.includes('comments') ? './' : 'comments'}
         className='mt-4 self-start text-xl'
+        prefetch='intent'
       >
         {pathname.includes('comments') ? 'Hide' : 'Show'} comments
       </Link>
