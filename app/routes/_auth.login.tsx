@@ -123,7 +123,11 @@ export default function Login() {
           </Form>
           <h3>
             Don't have an account?{' '}
-            <Link to='../register' className='text-purple-500 hover:underline'>
+            <Link
+              to='../register'
+              className='text-purple-500 hover:underline'
+              prefetch='intent'
+            >
               Sign up
             </Link>
           </h3>

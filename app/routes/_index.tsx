@@ -38,7 +38,7 @@ export default function Index() {
           <button className='text-2xl hover:underline'>Logout</button>
         </Form>
       ) : (
-        <Link to='login' className='text-2xl hover:underline'>
+        <Link to='login' className='text-2xl hover:underline' prefetch='intent'>
           Login
         </Link>
       )}

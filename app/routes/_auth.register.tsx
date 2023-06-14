@@ -128,7 +128,11 @@ export default function Register() {
           </Form>
           <h3>
             Already have an account?{' '}
-            <Link to='../login' className='text-purple-500 hover:underline '>
+            <Link
+              to='../login'
+              className='text-purple-500 hover:underline'
+              prefetch='intent'
+            >
               Sign in
             </Link>
           </h3>

@@ -40,7 +40,11 @@ export default function Todos() {
                         key={post.id}
                         className='flex w-1/3  items-center justify-center rounded bg-white p-4'
                       >
-                        <Link className='text-lg hover:underline' to={post.id}>
+                        <Link
+                          className='text-lg hover:underline'
+                          to={post.id}
+                          prefetch='intent'
+                        >
                           {post.title}
                         </Link>
                       </li>
@@ -54,6 +58,7 @@ export default function Todos() {
             <Link
               to='new'
               className='mt-4 self-center rounded-lg bg-white p-4 text-xl transition-all hover:underline'
+              prefetch='intent'
             >
               Add Post
             </Link>
