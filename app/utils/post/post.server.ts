@@ -28,7 +28,7 @@ export async function createPost(
 }
 
 export async function getPosts() {
-  const posts = await db.post.findMany({
+  const posts = db.post.findMany({
     take: 5,
   });
   if (!posts) {

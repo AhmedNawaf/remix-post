@@ -6,7 +6,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  Link,
 } from '@remix-run/react';
 import styles from './globals.css';
 
