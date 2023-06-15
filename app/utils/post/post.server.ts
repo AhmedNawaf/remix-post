@@ -1,7 +1,5 @@
 import { db } from '../db.server';
 import { json } from '@remix-run/node';
-import { ZodSchema, ZodError } from 'zod';
-import { parseForm } from 'zodix';
 
 export async function createPost(
   title: string,
@@ -77,14 +75,29 @@ export async function updatePost(
   return post;
 }
 
-export async function deletePost(id: string | undefined) {
-  const post = await db.post.delete({
+export async function deletePostAndComments(id: string | undefined) {
+  const post = await db.post.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      comments: true,
+    },
+  });
+
+  if (post?.comments.length) {
+    await db.comment.deleteMany({
+      where: {
+        postId: id,
+      },
+    });
+  }
+
+  await db.post.delete({
     where: {
       id,
     },
   });
-  if (!post) {
-    throw json({ message: 'Post not deleted' }, { status: 500 });
-  }
+
   return post;
 }

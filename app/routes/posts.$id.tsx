@@ -18,7 +18,11 @@ import {
 } from '@remix-run/node';
 import { getUserSession } from '~/utils/sessions.server';
 import { useEffect, useState } from 'react';
-import { deletePost, getPostById, updatePost } from '~/utils/post/post.server';
+import {
+  deletePostAndComments,
+  getPostById,
+  updatePost,
+} from '~/utils/post/post.server';
 import { getUser } from '~/utils/user/user.server';
 import { badRequest } from '~/utils/request.server';
 import {
@@ -52,7 +56,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 export const action = async ({ params, request }: ActionArgs) => {
   if (request.method === 'DELETE') {
-    await deletePost(params.id);
+    await deletePostAndComments(params.id);
     return redirect('/posts');
   }
   if (request.method === 'POST') {

@@ -5,8 +5,7 @@
     "build": "remix build",
     "dev": "remix dev",
     "start": "remix-serve build",
-    "typecheck": "tsc",
-    "build:css": "tailwindcss -o ./app/tailwind.css"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@prisma/client": "^4.15.0",
@@ -16,14 +15,12 @@
     "@remix-run/react": "^1.17.0",
     "@remix-run/serve": "^1.17.0",
     "bcrypt": "^5.1.0",
-    "class-variance-authority": "^0.6.0",
-    "clsx": "^1.2.1",
+    "domain-functions": "^1.7.1",
     "isbot": "^3.6.8",
-    "lucide-react": "^0.241.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwind-merge": "^1.13.1",
-    "tailwindcss-animate": "^1.0.6",
+    "react-hook-form": "^7.44.3",
+    "remix-forms": "^1.6.3",
     "zod": "^3.21.4",
     "zodix": "^0.4.1"
   },
